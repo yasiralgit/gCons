@@ -1,14 +1,10 @@
 import os
 from subprocess import call
-from Bio.Seq import Seq
 from Bio import SeqIO
-import sys
 import csv
 import time
 import numpy
 import matplotlib.pyplot as plt
-import numpy as np
-import mplcursors 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import tkinter as tk
 from tkinter import ttk
@@ -204,17 +200,6 @@ def affichMatGenRef(matGen):
 def appelKmer():
     k = int(input("Saisissez la taille de kmer souhaitée : "))
     return k
-''' Finalement gamma pas utilisé
-def calculGamma(g,Tposition,saveGkampi):
-    nb = 0 
-    for i in range(Tposition[g]) :
-        nb += len(Tposition[g][i])
-    return nb/len(saveGkampi[g])
-'''
-
-
-
-
 
 
 def lancerGkampi(k,fichier,num):
@@ -286,8 +271,7 @@ def listePosition(k,argv):
         print(argv)
         cpt = 1
         lancerGkampi(k,element,num)
-        saveGkampi["g"+str(num)]= {}
-        saveGkampi2["g"+str(num)]= {}
+        if cpt == 1 : saveGkampi= {}
         Tposition.append([]) 
         for i in range(len(liste)):
             Tposition[-1].append([])
@@ -297,8 +281,7 @@ def listePosition(k,argv):
             Lecture = list(Lecture) 
             if cpt == 1:
                 for i in Lecture:
-                    saveGkampi["g"+str(num)][int(i[1][1:])] = i[0] 
-                    saveGkampi2["g"+str(num)][i[0]] = int(i[1][1:]) #partiel
+                    saveGkampi[int(i[1][1:])] = i[0] 
             print("La taille est de : ",len(liste))
             for i in range (len(liste)):
                 gkampIndex = 0
@@ -425,9 +408,9 @@ def zonesCommunes(Tposition,beta):
 def adr2seq(liste_Finale,saveGkampi):
     listeseq = []
     for i in liste_Finale:
-        sequence = saveGkampi["g1"][i[0]] 
+        sequence = saveGkampi[i[0]] 
         for y in i[1:]:
-            sequence = sequence + saveGkampi["g1"][y][-1] 
+            sequence = sequence + saveGkampi[y][-1] 
         listeseq.append(sequence)
     return listeseq
 

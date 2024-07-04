@@ -1,11 +1,3 @@
-import os
-from subprocess import call
-from Bio.Seq import Seq
-from Bio import SeqIO
-import sys
-import csv
-import time
-import numpy
 from gCons_fonctionsTK import *
 from customtkinter import * 
 
