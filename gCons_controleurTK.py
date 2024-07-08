@@ -11,7 +11,8 @@ tabview.pack(expand= 1, anchor='n',padx=20,pady=20,fill="both")
 
 tabview.add("Tab 1")
 tabview.add("Tab 2")
-
+#tabview.add("Tab 3")
+#tabview.add("Tab 4")
 
 label = CTkLabel(master=root, text="Zones Communes")
 label.place(relx=0.5, anchor="n")
@@ -21,6 +22,12 @@ frame.pack(expand=True, anchor="n",pady=30,fill='both')
 
 frameT2 = CTkScrollableFrame(master=tabview.tab("Tab 2"), border_width=2, orientation="vertical")
 frameT2.pack(expand=True, anchor="n",pady=30, fill='both')
+
+#frameT3 = CTkScrollableFrame(master=tabview.tab("Tab 3"), border_width=2, orientation="vertical")
+#frameT3.pack(expand=True, anchor="n",pady=30, fill='both')
+
+#frameT4 = CTkScrollableFrame(master=tabview.tab("Tab 4"), border_width=2, orientation="vertical")
+#frameT4.pack(expand=True, anchor="n",pady=30, fill='both')
 
 frameInnit = CTkFrame(master=frame, border_width=2)
 frameInnit.pack(expand=True, anchor="n",pady=30, padx=10)
@@ -44,7 +51,7 @@ def click_hander():
     print(f"Pourcentage beta : {entryB.get()}")
     argv = textbox.get().split()
     #for elt in argv : print(elt)
-    main(argv, entry1.get(),entryA.get(),entryB.get(),frameT2)
+    main(argv, entry1.get(),entryA.get(),entryB.get(),frameT2,root) #contenait tabFrameT3 et T4
     #main(["testPlus.fasta","test2.fasta","test3.fasta","test.fasta","testPlus2.fasta","testPlus3.fasta"],"10","100","100",frameT2)
 global textbox
 global entry1

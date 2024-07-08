@@ -10,8 +10,8 @@ import tkinter as tk
 from tkinter import ttk
 from customtkinter import * 
 
-
-def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
+nbSub = 0
+def affStructSeg(all_data_sets,tabFrame,app,argv,k,alpha,beta,nbSub):
     num_colors = max(len(data_set) for data_set in all_data_sets) # on va avoir autant de couleur qu'il y a de groupes communs distincts
     cmap = plt.cm.get_cmap('viridis', num_colors) # on prend la bibliothèque de couleur viridis pour num_colors couleurs
     # pour l'échelle on récupère la plus petite et la plus grande valeur des zones communes
@@ -44,7 +44,7 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
                 max_group = group[-1][1]
                 labels.append(f'{min_group}-{max_group}')
                 #legend_handles2.append(plt.Line2D([0],[0],color=color,lw=4,label=f'{min_group}-{max_group}'))
-                legend_handles.append((hex_color,f'{min_group}-{max_group}')) #pour la légende tkinter
+                legend_handles.append((hex_color,f'{min_group}-{max_group+9}')) #pour la légende tkinter
             for zone in group:
                 line, = ax.plot(zone, [y_value,y_value], linewidth=10, color=color) #on trace chaque zone
                 #print(group_index)
@@ -56,11 +56,27 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
         ystickslables.append(f"Génome {fic_index+1} in {fic}") #on crée les modalités des ordonnées
     ax.set_yticklabels(ystickslables)
     fig.tight_layout(rect=[0, 0, 1, 1])
+    #plt.show()
+    def on_closing():
+        plt.close('all')  # Fermer toutes les figures matplotlib
+        after_tasks = app.tk.eval("after info").split()
+        for after_id in after_tasks:
+            app.after_cancel(after_id)
+        print("fermeture")
+        app.destroy()  # Détruire l'application tkinter
+        #plt.close('all')
+        ##plt.show()
+        ##fig.clf()
+        #print("fermeture")
+        ##fig.close()
+        #app.destroy()
 
-    def create_scrollable_legend(handles, title):
+    app.protocol("WM_DELETE_WINDOW", on_closing)
+    def create_scrollable_legend(handles, title,indice):
+        print(indice)
         root = tabFrame
 
-        main_frame = ttk.Frame(root, padding='0.05i')
+        main_frame = ttk.Frame(root, padding='0.05i', name=f"mf{indice}")
 
         name = "Reference genome = "+argv[0]+ "| compared genomes = "
         for fic in argv[1:] :
@@ -81,7 +97,7 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
 
         scrollbarH = ttk.Scrollbar(main_frame, orient=tk.HORIZONTAL, command=scroll_canvas.xview)
         scrollbarH.pack(side=tk.BOTTOM, fill=tk.X)
-
+#
         scrollbarV = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=scroll_canvas.yview)
         scrollbarV.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -91,7 +107,7 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
         scroll_canvas.configure(xscrollcommand=scrollbarH.set,yscrollcommand=scrollbarV.set)
 
         canvas_frame = ttk.Frame(scroll_canvas)
-        #scroll_canvas.create_window((0,0), window=canvas_frame,anchor='center', height=300)
+        scroll_canvas.create_window((0,0), window=canvas_frame,anchor='center', height=300)
         canvas_frame.pack(expand=1,fill=tk.BOTH)
         canvas = FigureCanvasTkAgg(fig, master=canvas_frame) # on récupère la figure de matpolib pour l'afficher via tkinter
         canvas.draw()
@@ -113,7 +129,7 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
         #ajout de la barre d'outil
         toolbar = NavigationToolbar2Tk(canvas, main_frame) #on cree une toolbar par rapport à canvas dans main_frame
         toolbar.update() #on met à jour la barre d'outil sur l'état actuel de la figure matpotlib
-        #canvas_widget.pack( fill=tk.BOTH, expand=1) #on met le canvas au dessus de la toolbar dans main_frame
+        canvas_widget.pack( fill=tk.BOTH, expand=1) #on met le canvas au dessus de la toolbar dans main_frame
 
 
  
@@ -122,15 +138,15 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
 
         scrollbar = ttk.Scrollbar(legend_frame, orient=tk.VERTICAL) #on crée une scrollbar verticale du widget de la légende
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y) # on met la scrollbar à droite
-
-
+#
+#
         legend_canvas = tk.Canvas(legend_frame) #dans le widget da la légénde on crée un canvas qui va servir pour les icones de couleur
         legend_frame_inner = ttk.Frame(legend_canvas) #widget qui contient les éléments de la légende
         scrollbar.config(command=legend_canvas.yview) #on config la scrollbar pour le widget legend_canvas
         legend_canvas.create_window((0, 0), window=legend_frame_inner, anchor='nw') #crée une fenetre en haut à gauche de legend_canvas qui contient le widget legend_frame_inner
         legend_canvas.config(yscrollcommand=scrollbar.set) #on config de défilement de legend_canvas 
         legend_canvas.pack(side=tk.LEFT,fill=tk.BOTH, expand=1)
-
+#
         for color,label in handles :
             label_frame = ttk.Frame(legend_frame_inner) #on crée un widget du widget d'élément de la légende
             color_label = tk.Label(label_frame, bg=color,width=2) # on crée un label de couleur du widget label_frame
@@ -138,7 +154,7 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
             color_label.pack(side=tk.LEFT, fill=tk.Y) # la couleur va prendre toute la hauteur disponible dans label_frame
             text_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=1) # le texte va prendre toute la hauteur et la largeur disponible dans label_frame
             label_frame.pack(fill=tk.X, pady=1) #on place l'élement dans la légende on gardant un petit espace pour le suivant
-
+#
         legend_frame_inner.update_idletasks() #mets à jours dans tkinter les modifications qu'on vient d'effectuer
         legend_canvas.config(scrollregion=legend_canvas.bbox("all")) # configure tout le widget legend_canvas comme étant défilable 
 
@@ -157,11 +173,24 @@ def affStructSeg(all_data_sets,tabFrame,argv,k,alpha,beta):
         canvas.mpl_connect("button_press_event",on_click) #appelle on_click lors d'un clic de souris dans le widget qui contient la figure matpotlib        
         #canvas.mpl_connect("scroll_event",on_scroll)
 
+        def sup() :
+            global nbSub
+            root.nametowidget(f"mf{nbSub}").destroy()
+            if nbSub == 1 :
+                root.nametowidget(f"btn1").destroy()
+            nbSub -= 1 
 
+            
         scroll_canvas.update_idletasks()
         scroll_canvas.config(scrollregion=scroll_canvas.bbox("all"))
+        if indice == 1 :
+            btn1 = ttk.Button(root, text ="Supprimer le dernier schéma", command = sup, name= f"btn{indice}") 
+            btn1.pack(pady = 10) 
 
-    create_scrollable_legend(legend_handles,"Group IDs")
+
+    indice = 0
+    create_scrollable_legend(legend_handles,"Group IDs",nbSub)
+    
 
 #Pour debogger
 def affichMatGen(matGen):
@@ -272,7 +301,7 @@ def listePosition(k,argv):
         cpt = 1
         lancerGkampi(k,element,num)
         if cpt == 1 : saveGkampi= {}
-        Tposition.append([]) 
+        Tposition.append([])
         for i in range(len(liste)):
             Tposition[-1].append([])
         debut = time.time()
@@ -415,7 +444,12 @@ def adr2seq(liste_Finale,saveGkampi):
     return listeseq
 
 
-def sauvGenCons(liste_Finale,listeseq,k,argv):
+def sauvGenCons(liste_Finale,listeseq,k,argv): #contenait tabFrame3
+    #root = tabFrame3
+    #main_frame = CTkFrame(master=root, border_width=2)
+    #main_frame.pack(expand=True, anchor="n",fill="both")
+    #label = CTkLabel(master=main_frame,text="Consensus genome sequence", font=("Arial",30))
+    #label.pack(anchor="center", expand=True, pady=10, padx= 30)
     scaffoldList = []
     nameliste = []
     infoSup=""
@@ -435,6 +469,11 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
                     infoSup += "| Pos in seq ("+ nameliste[compteur] +") inside the reference fasta file : begin = " + str( -pos[0] + liste_Finale[id][0]) 
             entete = ">sequence/scaffold_"+ str(id+1) +" | Position with Gkampi index in g1 "+ str(liste_Finale[id][0]) +" ==> "+ str(liste_Finale[id][-1] + k-1) + " | " + str(argv[0]) + infoSup +"\n"
             File.write(entete+sequence+"\n")
+            #labwr = CTkScrollableFrame(master=main_frame, border_width=2, orientation="horizontal")
+            #labwr.pack(anchor="center", expand=True,fill="both")
+            #wr = CTkLabel(master=labwr, text=entete+sequence)
+            #wr.pack(anchor="center", expand=True, fill="both")
+    #main_frame.pack(fill=tk.BOTH, expand=1)
     return 0 
 
 def sauvZonesCommunes(liste_Finale):
@@ -443,7 +482,31 @@ def sauvZonesCommunes(liste_Finale):
         Ecriture.writerows(liste_Finale)
 
 
-def main(argv,kmer,alpha,beta,tabFrame) :
+
+#def launchT4(T4,liste_Finale,listeSeq) :
+#    global entry 
+#    root = T4
+#    main_frame = CTkFrame(master=root, border_width=2)
+#    main_frame.pack(expand=True, anchor="n",fill="both")
+#    frame1 = CTkFrame(master=main_frame, border_width=2)
+#    frame1.pack(expand=True, anchor="n",fill="both")
+#    label1 = CTkLabel(master=frame1, text="Inserez la zone voulue pour avoir la séquence associée")
+#    label1.pack(anchor="w",expand=1,fill="both")
+#    entry = CTkEntry(master=frame1, width=50, text_color="#FFCC70")
+#    entry.pack(anchor="w",expand=1,fill="both")
+#    def click_hander():
+#        res = entry.split("-")
+#        for indice,zone in enumerate(liste_Finale) :
+#            if res[0] == zone[0] :
+#                frame2 = CTkFrame(master=main_frame, border_width=2)
+#
+#
+#    btn = CTkButton(master=frame1,text="Submit",command=click_hander)
+
+
+def main(argv,kmer,alpha,beta,tabFrame2,app) : #contenait aussi tabFrame3 et tabFrame4
+    global nbSub
+    nbSub+=1
     alpha = int(numpy.round((int(alpha) * len(argv)) / 100)) 
     beta = int(numpy.round((int(beta) * len(argv)) / 100)) 
     kmer = int(kmer)
@@ -458,8 +521,10 @@ def main(argv,kmer,alpha,beta,tabFrame) :
 
     listeSeq = adr2seq(listeZonesCommunes,dicoAdr2Kmer)
     #print(listeKmersPositions)
-    sauvGenCons(listeZonesCommunes,listeSeq,kmer,argv)
+    sauvGenCons(listeZonesCommunes,listeSeq,kmer,argv) #contenait tabFrame3
     sauvZonesCommunes(listeZonesCommunes)
 
 
-    affStructSeg(triCent(simpCent(data_sets)),tabFrame,argv,kmer,alpha,beta)
+    affStructSeg(triCent(simpCent(data_sets)),tabFrame2,app,argv,kmer,alpha,beta,nbSub)
+
+    #launchT4(tabFrame4,listeZonesCommunes, listeSeq)
