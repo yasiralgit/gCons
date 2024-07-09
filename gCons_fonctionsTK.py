@@ -375,93 +375,94 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta,nbSub):
     '''
     #configuration des couleurs associés aux zones communes via la bibliothèque viridis
     num_colors = max(len(data_set) for data_set in tabCentAdr) 
-    cmap = plt.cm.get_cmap('viridis', num_colors) 
+    cmap = plt.cm.get_cmap('viridis', num_colors)
     # pour l'échelle du schéma on récupère la plus petite et la plus grande position 
     min_val = min(min(zone[0] for group in data_set for zone in group) for data_set in tabCentAdr)
     max_val = max(max(zone[1] for group in data_set for zone in group) for data_set in tabCentAdr)
-    # on prend la taille du plus grand groupe commun de zone pour pouvoir espacé avec précaution chaque segment de chaque génome
+    # on prend la taille du plus grand groupe de zone pour pouvoir espacé avec précaution en ordonnée chaque segment de chaque génome
     max_data_set = max( len(data_set) for data_set in tabCentAdr)
+    #on crée le schéma
     fig, ax = plt.subplots(figsize=(5,2))
     legend_handles = []
     segment_info = {}
     y_mid = []
-    #tkinter n'accepte que les couleurs en hexa or on a des couleurs en codage RGB
+    #tkinter n'accepte que les couleurs en codage hexadécimal or on a des couleurs en codage RGB, une fonction de conversion est donc nécessaire
     def rgba_to_hex(rgba):
+        '''
+        \param rgba codage de couleur en rgb
+        \return codage de couleur en hexadécimal
+        '''
         r, g, b, _ = rgba
         return f'#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}'
 
     labels = []
     for ds_index, data_set in enumerate(tabCentAdr):
         y_value =3*max_data_set*ds_index # pour chaque génome on va avoir cet espacement
-        y_mid.append(y_value+(len(data_set)/2)) # au milieu de cet espacement on va placer dans les ordonnées le nom du génome
+        y_mid.append(y_value+(len(data_set)/2)) # au milieu de cet espacement on va placer dans les ordonnées le génome suivi de son numéro
         for group_index, group in enumerate(data_set):
-            y_value += 1 # pour pouvoir écarter chaque zone pour éviter tout overlapping
-            color = cmap(group_index/num_colors) #pour chaque zone d'un groupe on lui associe une couleur
-            hex_color = rgba_to_hex(color) #on convertit cette couleur en hexa pour la phase tkinter ensuite
-            if ds_index == 0 : # si on est dans le génome de référence
-                # on récupère les bornes du groupe ce qui va nous servir de légénde pour le groupe 
+            y_value += 1 # pour pouvoir écarter chaque groupe de zones pour éviter tout chevauchement
+            color = cmap(group_index/num_colors) #pour chaque groupe on associe une couleur
+            hex_color = rgba_to_hex(color) #on convertit cette couleur en hexadécimal
+            if ds_index == 0 : 
+                # on récupère les bornes du groupe dans le génome de référence ce qui va nous servir de légénde
                 min_group = group[0][0] 
                 max_group = group[-1][1]
                 labels.append(f'{min_group}-{max_group}')
-                #legend_handles2.append(plt.Line2D([0],[0],color=color,lw=4,label=f'{min_group}-{max_group}'))
-                legend_handles.append((hex_color,f'{min_group}-{max_group+k-1}')) #pour la légende tkinter
+                legend_handles.append((hex_color,f'{min_group}-{max_group+k-1}')) 
             for zone in group:
-                line, = ax.plot(zone, [y_value,y_value], linewidth=10, color=color) #on trace chaque zone
-                #print(group_index)
-                segment_info[line] = labels[group_index] #on associe à la zones les bornes du génome de référence
+                #on trace chaque zone
+                line, = ax.plot(zone, [y_value,y_value], linewidth=10, color=color) 
+                segment_info[line] = labels[group_index] #on associe à chaque zone la légende de son groupe
     ax.set_xlim(min_val - 1, max_val + 1) 
     ax.set_yticks(y_mid)
     ystickslables = []
     for fic_index,fic in enumerate(argv):
-        ystickslables.append(f"Génome {fic_index+1} in {fic}") #on crée les modalités des ordonnées
+        ystickslables.append(f"Génome {fic_index+1} in {fic}") 
     ax.set_yticklabels(ystickslables)
     fig.tight_layout(rect=[0, 0, 1, 1])
-    #plt.show()
     def on_closing():
+        '''
+        Permet de bien fermer la figure matplotlib quand on ferme l'interface customtkinter
+        '''
         plt.close('all')  # Fermer toutes les figures matplotlib
         after_tasks = app.tk.eval("after info").split()
-        for after_id in after_tasks:
+        for after_id in after_tasks: # Fermer toutes les fonctionnalités associées à l'objet app
             app.after_cancel(after_id)
         print("fermeture")
         app.destroy()  # Détruire l'application tkinter
-
     app.protocol("WM_DELETE_WINDOW", on_closing)
-    def create_scrollable_legend(handles, title,indice):
-        '''
-        met en place la fenêtre tkinter qui va heberger la figure matplotlib ainsi que sa légende
-        '''
-        print(indice)
-        root = tabFrame
 
+    def create_scrollable_legend(handles,indice):
+        '''
+        Met en place la fenêtre tkinter qui va heberger la figure matplotlib ainsi que sa légende
+        '''
+        print(f"Nombre de schéma : {indice}")
+        root = tabFrame
         main_frame = ttk.Frame(root, padding='0.05i', name=f"mf{indice}")
 
+        #Création des labels d'information qui renseigne les paramètres du schéma affiché
         name = "Reference genome = "+argv[0]+ "| compared genomes = "
         for fic in argv[1:] :
             name += fic + " "
         labelF = ttk.Label(main_frame, text= f"{name} ", background='white')
         labelF2 = ttk.Label(main_frame,text=f"| k-mer size = {k} | genome with the same k-mer = {alpha} | genome with the same link between k-mer = {beta}", background='white')
-
         labelF.pack(fill=tk.BOTH, expand=1)
         labelF2.pack(fill=tk.BOTH, expand=1)
  
-
-        scroll_canvas = tk.Canvas(main_frame, background="blue")
         
         #Création de l'étiquette qui va gérer le clic sur zone
         info_label = tk.Label(main_frame, text="Cliquez sur un segment pour voir les informations du groupe", bg="white", fg="black", font=("Arial",12))
         info_label.pack(side=tk.BOTTOM, fill=tk.X) # cette étiquette est placée en bas de tout et prend toute la largeur
 
+        #Création d'un objet Canva qui va contenir la figure matplotlib
+        scroll_canvas = tk.Canvas(main_frame, background="blue")
         scrollbarH = ttk.Scrollbar(main_frame, orient=tk.HORIZONTAL, command=scroll_canvas.xview)
         scrollbarH.pack(side=tk.BOTTOM, fill=tk.X)
-
         scrollbarV = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=scroll_canvas.yview)
         scrollbarV.pack(side=tk.RIGHT, fill=tk.Y)
-
         main_frame.pack(side=tk.TOP, expand=1, fill=tk.BOTH)
         scroll_canvas.pack(side=tk.LEFT,  expand=1, fill=tk.BOTH)
-
         scroll_canvas.configure(xscrollcommand=scrollbarH.set,yscrollcommand=scrollbarV.set)
-
         canvas_frame = ttk.Frame(scroll_canvas)
         scroll_canvas.create_window((0,0), window=canvas_frame,anchor='center', height=300)
         canvas_frame.pack(expand=1,fill=tk.BOTH)
@@ -469,74 +470,70 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta,nbSub):
         canvas.draw()
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=1) # on place la figure matpotlib sur le coté gauche du widjet
-
         canvas_frame.update_idletasks()
         scroll_canvas.config(scrollregion=scroll_canvas.bbox("all"))
 
-        #ajout de la barre d'outil
+        #Ajout de la Toolbar de matplotlib en widget tkinter
         toolbar = NavigationToolbar2Tk(canvas, main_frame) #on cree une toolbar par rapport à canvas dans main_frame
         toolbar.update() #on met à jour la barre d'outil sur l'état actuel de la figure matpotlib
         canvas_widget.pack( fill=tk.BOTH, expand=1) #on met le canvas au dessus de la toolbar dans main_frame
 
 
- 
-        legend_frame = ttk.Frame(main_frame) #on crée un widget de main_frame qui va etre la légende
-        legend_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1) # 
-
-        scrollbar = ttk.Scrollbar(legend_frame, orient=tk.VERTICAL) #on crée une scrollbar verticale du widget de la légende
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y) # on met la scrollbar à droite
-
-        legend_canvas = tk.Canvas(legend_frame) #dans le widget da la légénde on crée un canvas qui va servir pour les icones de couleur
-        legend_frame_inner = ttk.Frame(legend_canvas) #widget qui contient les éléments de la légende
-        scrollbar.config(command=legend_canvas.yview) #on config la scrollbar pour le widget legend_canvas
-        legend_canvas.create_window((0, 0), window=legend_frame_inner, anchor='nw') #crée une fenetre en haut à gauche de legend_canvas qui contient le widget legend_frame_inner
-        legend_canvas.config(yscrollcommand=scrollbar.set) #on config de défilement de legend_canvas 
+        #Création de l'objet Frame de la légende du schéma
+        legend_frame = ttk.Frame(main_frame) 
+        legend_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=1) 
+        scrollbar = ttk.Scrollbar(legend_frame, orient=tk.VERTICAL) #on crée une scrollbar verticale pour legend_frame
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y) # on place la scrollbar à droite
+        legend_canvas = tk.Canvas(legend_frame) #création d'un objet Canvas à partir de legend_frame
+        legend_frame_inner = ttk.Frame(legend_canvas) #création d'un widget pour chaque élément de la légende
+        scrollbar.config(command=legend_canvas.yview) 
+        legend_canvas.create_window((0, 0), window=legend_frame_inner, anchor='nw') #placement de legend_frame dans une fenêtre en haut à gauche du Canvas
+        legend_canvas.config(yscrollcommand=scrollbar.set)
         legend_canvas.pack(side=tk.LEFT,fill=tk.BOTH, expand=1)
 
+        #Création de chaque élément de la légende à partir de la description et de la couleur de chaque groupe de zone
         for color,label in handles :
-            label_frame = ttk.Frame(legend_frame_inner) #on crée un widget du widget d'élément de la légende
-            color_label = tk.Label(label_frame, bg=color,width=2) # on crée un label de couleur du widget label_frame
-            text_label = tk.Label(label_frame, text=label, anchor='w') # on crée un label de texte du widget label_frame ancrée à gauche
-            color_label.pack(side=tk.LEFT, fill=tk.Y) # la couleur va prendre toute la hauteur disponible dans label_frame
-            text_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=1) # le texte va prendre toute la hauteur et la largeur disponible dans label_frame
-            label_frame.pack(fill=tk.X, pady=1) #on place l'élement dans la légende on gardant un petit espace pour le suivant
+            label_frame = ttk.Frame(legend_frame_inner) 
+            color_label = tk.Label(label_frame, bg=color,width=2) 
+            text_label = tk.Label(label_frame, text=label, anchor='w') 
+            color_label.pack(side=tk.LEFT, fill=tk.Y) 
+            text_label.pack(side=tk.LEFT, fill=tk.BOTH, expand=1) 
+            label_frame.pack(fill=tk.X, pady=1) 
 
-        legend_frame_inner.update_idletasks() #mets à jours dans tkinter les modifications qu'on vient d'effectuer
-        legend_canvas.config(scrollregion=legend_canvas.bbox("all")) # configure tout le widget legend_canvas comme étant défilable 
-
+        legend_frame_inner.update_idletasks() #mise à jours dans tkinter des modifications effectuées
+        legend_canvas.config(scrollregion=legend_canvas.bbox("all"))
 
         def on_click(event): 
             '''
             configure l'affichage de la zone d'un segment lorsqu'il est cliqué
             '''
             x, y = event.xdata, event.ydata
-            if x is not None and y is not None : #on vérifie que les coordonées du clic sont correctes
-                for line in segment_info : #pour chaque zone on va voir si on en a pas une qui coordonne avec ce clic
-                    line_xdata = line.get_xdata() # on récupère les abscisses 
-                    line_ydata = line.get_ydata() # on récupère les ordonnées
-                    if line_xdata[0] <= x <= line_xdata[1] and line_ydata[0] - 1 <= y <= line_ydata[0] + 1 : #verifie que le clic est dans la zone du segment 
-                        group_id = segment_info[line] # donne le label de cette zone/ de ce segment 
+            if x is not None and y is not None : 
+                for line in segment_info : 
+                    line_xdata = line.get_xdata() 
+                    line_ydata = line.get_ydata() 
+                    if line_xdata[0] <= x <= line_xdata[1] and line_ydata[0] - 1 <= y <= line_ydata[0] + 1 : #la zone de clic en ordonnée est de 2
+                        group_id = segment_info[line] 
                         print(f"Clicked on {group_id}")
                         info_label.config(text=f"Vous avez cliqué sur la zone : {group_id}")
-                        break # si une ligne correspond on a plus besoin de continuer d'itérer
-        canvas.mpl_connect("button_press_event",on_click) #appelle on_click lors d'un clic de souris dans le widget qui contient la figure matpotlib        
+                        break 
+        canvas.mpl_connect("button_press_event",on_click)        
 
         def sup() :
             '''
             configure la suppression de schéma via le bouton associé en fonction du nombre de schéma
             '''
             global nbSub
-            root.nametowidget(f"mf{nbSub}").destroy()
+            root.nametowidget(f"mf{nbSub}").destroy() #Destruction de l'objet Frame qui contient le schéma
             if nbSub == 1 :
-                root.nametowidget(f"btn1").destroy()
+                root.nametowidget(f"btn1").destroy() #Si il ne reste que le premier schéma : destruction du bouton de suppression
             nbSub -= 1             
         scroll_canvas.update_idletasks()
         scroll_canvas.config(scrollregion=scroll_canvas.bbox("all"))
         if indice == 1 :
-            btn1 = ttk.Button(root, text ="Supprimer le dernier schéma", command = sup, name= f"btn{indice}") 
+            btn1 = ttk.Button(root, text ="Supprimer le dernier schéma", command = sup, name= f"btn{indice}")#Création du bouton de suppression de schéma au premier submit
             btn1.pack(pady = 10) 
-
-    create_scrollable_legend(legend_handles,"Group IDs",nbSub)
+    create_scrollable_legend(legend_handles,nbSub)
     return 0
     
 
