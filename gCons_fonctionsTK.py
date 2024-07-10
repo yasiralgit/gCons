@@ -284,7 +284,7 @@ def zonesCommunes(Tposition,beta):
             cpt = 1 
             if Tposition[0][i][z] not in listeDesParcourus : #si cette position n'a pas déjè été vue 
                 listeDesParcourus.append(Tposition[0][i][z])
-                res.append([Tposition[0][i][z]]) #il devient le début d'une zone commune
+                res.append([Tposition[0][i][z]]) #elle devient le début d'une zone commune
                 for q in range (len(Tposition)): #on ajoute une zone commune à chaque génome dans tabCentAdr
                     tabCentAdr[q].append([])
                 bool,kmer,tabRes = extensible(Tposition[0][i][z],i,Tposition,beta)
@@ -292,25 +292,25 @@ def zonesCommunes(Tposition,beta):
                     for q in range (len(tabRes)): #pour chaque génome dans tabRes
                         if tabRes[q] != [] :
                             tabCentAdr[q][-1].append([tabRes[q][0]-1,tabRes[q][0]]) #on ajoute à la zone commune qui vient d'etre créée dans les génomes l'arete de la liaison
-                    res[-1].append(tabRes[0][0])
+                    res[-1].append(tabRes[0][0]) #on ajoute la position étendue à res
                     listeDesParcourus.append(tabRes[0][0])
                     bool,kmer,tabRes = extensible(tabRes[0][0],kmer,Tposition,beta)
-        for element in res: 
-            bool = True
-            for element2 in range(len(liste_Finale)): 
-                for pos in element: 
-                    if (pos) in liste_Finale[element2]: 
-                        if len(element) > len(liste_Finale[element2]): 
-                            liste_Finale[element2] = element 
-                            bool = False
-            if bool == True:
-                liste_Finale.append(element)
+        #on réduit res en ne gardant que les plus grandes zones quand il y a chevauchement
+        for zone in res: 
+            doublon = False
+            for i in range(len(liste_Finale)): 
+                for pos in zone: 
+                    if (pos) in liste_Finale[i]: 
+                        doublon = True
+                        liste_Finale[i] = zone 
+            if doublon == False:
+                liste_Finale.append(zone)
     liste_Finale.sort()
     return liste_Finale,tabCentAdr#,tabCentAdrSimp
 
 def adr2seq(liste_Finale,saveGkampi):
     '''
-    Convertit une liste de succession de positions du génome de référence en liste de séquence de nucélotides
+    Convertit une liste de succession de positions du génome de référence en liste de séquence de nucélotides via le dictionnaire saveGkampi
     \param liste_Finale : tableau d'entiers
     \param saveGkampi : dictionnaire
     \return listeseq : tableau de string
@@ -319,7 +319,7 @@ def adr2seq(liste_Finale,saveGkampi):
     for i in liste_Finale:
         sequence = saveGkampi[i[0]] #Conversion de la première position de la zone en séquence de nucléotide via saveGkampi
         for y in i[1:]:
-            sequence = sequence + saveGkampi[y][-1] #Concatenation de la dernière lettre des autres positions
+            sequence = sequence + saveGkampi[y][-1] #Concatenation de la dernière lettre des k-mers des positions suivantes
         listeseq.append(sequence)
     return listeseq
 
@@ -329,8 +329,8 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
     Crée le fichier de sortie fasta qui contient le génome consensus
     \param liste_Finale : tableau d'entiers, tableau des positions dans le génome de référence des zones communes
     \param listeseq : tableau de string, tableau de séquences de nucléotides
-    \param k : entier
-    \param argv : tableau de string
+    \param k : entier, taille du k-mer
+    \param argv : tableau de string, tableau de noms des fichiers
     \return 0 
     '''
     scaffoldList = []
@@ -377,16 +377,16 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
     \param tabFrame : objet customtkinter CTkScrollableFrame
     \param app : objet racine de l'interface customtkinter
     \param argv : tableau de string, noms des fichiers insérés
-    \param k : entier, taille de k-mer inséré
-    \param alpha : entier, nombre de génome validant alpha
-    \param beta : entier, nombre de génome validant béta
+    \param k : entier, taille de k-mer insérée
+    \param alpha : entier, seuil de génome pour lequel un k-mer commun est considéré
+    \param beta : entier, seuil de génome pour lequel une liaison entre k-mer commun est considérée
     \return 0 
     '''
     #tkinter n'accepte que les couleurs en codage hexadécimal or matplotlib donne des couleurs en codage RGB, une fonction de conversion est donc nécessaire
     def rgba_to_hex(rgba):
         '''
         Convertit un codage rgba en un codage hexadécimal
-        \param rgba codage de couleur en rgb
+        \param rgba codage de couleur en rgba
         \return codage de couleur en hexadécimal
         '''
         r, g, b, _ = rgba
@@ -478,7 +478,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
         canvas.draw()
         canvas_widget = canvas.get_tk_widget()
         canvas_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=1) 
-        canvas_frame.update_idletasks()
+        canvas_frame.update_idletasks()#Mise à jours de canvas_frame 
         scroll_canvas.config(scrollregion=scroll_canvas.bbox("all"))#Configuration du défilement sur tout le contenu de scroll_canvas
 
         #Ajout de la Toolbar de matplotlib en widget tkinter
@@ -535,7 +535,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
     labels = []
     for ds_index, data_set in enumerate(tabCentAdr):
         y_value =3*max_data_set*ds_index #L'ordonnée de début pour placer les zones communes de chaque génome
-        y_mid.append(y_value+(len(data_set)/2)) #L'ordonnée pour laquelle on place la modalité de l'ordonnée (Génome i)
+        y_mid.append(y_value+(len(data_set)/2)) #L'ordonnée pour laquelle on place la modalité (Génome i)
         for group_index, group in enumerate(data_set):
             y_value += 1 #Écart pour éviter tout chevauchement de zone
             color = cmap(group_index/num_colors) 
@@ -589,8 +589,6 @@ def main(argv,kmer,alpha,beta,tabFrame2,app) :
     #Création des zones communes
     liste_Finale,tabCentAdr = zonesCommunes(Tposition,beta)
     affichMatGenCompMeilleur(triTCA(redTCA(tabCentAdr)))
-    
-    #for key,value in saveGKampi.items() : print(f"\n\t{key}->{value}")
     listeSeq = adr2seq(liste_Finale,saveGKampi)
 
     #Les sorties finales
