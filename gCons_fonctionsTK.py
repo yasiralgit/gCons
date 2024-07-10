@@ -68,8 +68,8 @@ def affichMatGenRef(matGen):
 def lancerGkampi(k,fichier,num):
     '''
     Permet de lancer gkampi pour le fichier et la taille de k-mer indiqués, num permet de nommer le fichier de sortie
-    \param k : entier
-    \param fichier : string
+    \param k : entier, taille de k-mer
+    \param fichier : string, nom du fichier
     \param num : entier
     \return 0 
     '''
@@ -91,7 +91,7 @@ def lancerRedOak(k,argv):
     '''
     Permet de lancer redOak pour la taille de k-mer et les fichiers indiqués
     \param k : entier
-    \param argv : tableau de string
+    \param argv : tableau de string, tableau contenant les noms des fichiers
     \return 0
     '''
     commandeRedOak = ["./redoak"]
@@ -111,7 +111,7 @@ def commandeGrep(alpha,argv):
     '''
     Permet de lancer la commande grep qui va filtrer les k-mers communs du fichier de sortie redOak selon alpha
     \param alpha : entier, seuil de génome pour lequel on considère un k-mer commun
-    \param argv : tableau de string, noms des fichiers
+    \param argv : tableau de string
     '''
     commandeGrep = "grep -E \""
     val = int(alpha)
@@ -148,123 +148,126 @@ def fTposition(k,argv):
     Crée la structure de donnée Tposition qui contient toutes les positions des k-mers communs dans chaque génome
     \param k : entier
     \param argv : tableau de string
-    \return Tposition : tableau de tableau de tableau d'entiers
+    \return Tposition : tableau de tableau de tableau d'entiers, tableau des positions des k-mers communs pour chaque génome
     \return saveGkampi : dictionnaire qui associe à chaque position du génome de référence le k-mer associé
     '''
     liste = fliste()
     Tposition=[]
     saveGkampi = {}
     num = 1
-    for element in argv:
-        print(argv)
-        lancerGkampi(k,element,num)
+    for fichier in argv: #pour chaque génome
+        lancerGkampi(k,fichier,num)
         Tposition.append([])
+        #Ajout d'autant de tableau qu'il y a de k-mers communs dans liste
         for i in range(len(liste)):
             Tposition[-1].append([])
         debut = time.time()
+        #Ouverture du fichier de sortie gkampi
         with open("result"+str(num)+".csv",newline='') as File: 
             Lecture = csv.reader(File,delimiter=" ") 
             Lecture = list(Lecture) 
             if num == 1:
+                #S'il s'agit du génome de référence on alimente le dictionnaire saveGkampi
                 for i in Lecture:
                     saveGkampi[int(i[1][1:])] = i[0] 
             print("La taille est de : ",len(liste))
-            for i in range (len(liste)):
-                gkampIndex = 0
-                while gkampIndex<len(Lecture) and str(Lecture[gkampIndex][0]) != str(liste[i])  : 
+            gkampIndex = 0 #Indice qui va nous permettre de d'iterer sur les lignes du fichier *
+            for i in range (len(liste)): #pour chaque k-mer commun
+                while gkampIndex<len(Lecture) and str(Lecture[gkampIndex][0]) != str(liste[i])  :#tant que le k-mer de la ligne n'est pas équivalent au k-mer commun
                     gkampIndex = gkampIndex +1 
-                while gkampIndex<len(Lecture) and str(Lecture[gkampIndex][0]) == str(liste[i]) :
-                    Tposition[-1][i].append(int(Lecture[gkampIndex][1][1:]))
+                while gkampIndex<len(Lecture) and str(Lecture[gkampIndex][0]) == str(liste[i]) :#tant que le k-mer de la ligne est équivalent au k-mer commun
+                    Tposition[-1][i].append(int(Lecture[gkampIndex][1][1:])) #Ajout de sa position dans Tposition
                     gkampIndex = gkampIndex + 1          
         num += 1 
         print(time.time()-debut)
     return Tposition,saveGkampi
-
+# * On initialise gkampIndex avant la boucle de liste car redOak et gkampi indexent de meme manière les génomes 
 
 def extensible(pos,NKmer,Tposition,beta): 
     '''
-    Permet de déterminer si un k-mer peut être étendu
+    Permet de déterminer si un k-mer peut être étendu, si c'est possible, renvoie l'indice dans Tposition du k-mer avec lequel il l'est, et ses positions dans les génomes pour lesquels l'extension est possible
     \param pos : entier, position du k-mer
     \param NKmer : entier, indice du k-mer dans Tposition
     \param Tposition : tableau de tableau de tableau d'entiers
     \param beta : entier, seuil de génome pour lequel on considère la liaison entre k-mer
-    \return True l'indice du k-mer associé et sa position si le k-mer peut etre étendu False,-1,-1 sinon
+    \return True si l'extension est possible, False sinon
+    \return ksauv : entier, l'indice dans Tposition du k-mer lié
+    \return tabRes : tableau de tableau d'entiers, le tableau des positions du k-mer lié dans les différents génomes
     '''
     tabRes = []
-    nbtrouve = 0
-    for Kmer in range (0,len(Tposition[0])):
-            for position in range (0,len(Tposition[0][Kmer])):
-                if Tposition[0][Kmer][position] == (pos+1):
-                    ksauv = Kmer
-                    tabRes.append([Tposition[0][Kmer][position]])
-                    nbtrouve = 1
-                    genomeVu = []
-                    for genome in range(1,len(Tposition)):
-                        tabRes.append([])
-                        for position2 in range (0,len(Tposition[genome][NKmer])):
-                            if (Tposition[genome][NKmer][position2]+1) in Tposition[genome][Kmer]:
-                                if genome not in genomeVu :
-                                    tabRes[-1].append(Tposition[genome][NKmer][position2]+1)
-                                    nbtrouve += 1
-                                    genomeVu.append(genome)
+    for Kmer in range (0,len(Tposition[0])): #pour chaque k-mer commun du génome de référence
+        if pos+1 in Tposition[0][Kmer] : #si une liaison est possible
+            ksauv = Kmer
+            tabRes.append([pos+1])
+            liaison = 1
+            genomeVu = []
+            #Recherche des autres liaisons possibles
+            for genome in range(1,len(Tposition)): #pour chaque génome hors génome de référence
+                tabRes.append([])
+                for position2 in range (0,len(Tposition[genome][NKmer])):
+                    #si une liaison existe dans le génome
+                    if (Tposition[genome][NKmer][position2]+1) in Tposition[genome][Kmer]:
+                        if genome not in genomeVu :
+                            tabRes[-1].append(Tposition[genome][NKmer][position2]+1)
+                            liaison += 1
+                            genomeVu.append(genome)
+            #si l'extension respecte le seuil beta
+            if (liaison>=beta):
+                return True,ksauv,tabRes
+            else :
+                return False,-1,-1
+    #s'il n y a pas de liaison possible dans le génome de référence
+    return False,-1,-1
 
-    if (nbtrouve>=beta and nbtrouve != 0):
-        return True,ksauv,tabRes
-    else :
-        return False,-1,-1
+def redTCA(tabCentAdr):
+    '''
+    Réduit la structure de donnée tabCentAdr en enlevant les doublons, ne gardant que les plus grandes zones communes quand il y a chevauchement dans le génome de référence
+    \param tabCentAdr : tableau de tableau de tableau de tableau d'entiers, structure qui contient pour chaque génome ses zones communes
+    \return tabCentAdrReduit : tableau de tableau de tableau de tableau d'entiers, structure réduite qui contient pour chaque génome ses zones communes
+    '''
+    tabCentAdrReduit = [] 
+    for j in range (len(tabCentAdr)):
+        tabCentAdrReduit.append([]) 
+    for zbi,zoneBrute in enumerate(tabCentAdr[0]): #pour chaque zone commune du génome de référence de tabCentAdr
+        if zoneBrute != [] :
+            doublon = False #on considère initialement qu'elle n'est pas un doublon
+            for pgzi,plusGrandeZone in enumerate(tabCentAdrReduit[0]): #on parcourt les zones réduites
+                for position in zoneBrute: 
+                    if position in plusGrandeZone: #s'il y a un chevauchement entre une zone brute et une zone réduite
+                        doublon = True #alors on a un doublon
+                        if len(zoneBrute) > len(plusGrandeZone): #et si la zone la plus grande est la zone brute alors on a trouvé une zone plus complète
+                            for i in range(len(tabCentAdr)):
+                                tabCentAdrReduit[i][pgzi] = tabCentAdr[i][zbi] #on écrase dans chaque génome l'ancienne zone réduite avec la nouvelle
+            if doublon == False: #s'il n y a pas de doublon alors on ajoute cette zone à tabCentAdrReduit 
+                for i in range (len(tabCentAdr)):
+                    tabCentAdrReduit[i].append(zoneBrute)
+    return tabCentAdrReduit
 
-def simpCent(matGenZone):
+def triTCA(tabCentAdr):
     '''
-    Réduit la structure de donnée matGenZone en enlevant les doublons
-    \param matGenZone : tableau de tableau de tableau de tableau d'entiers
-    \return matGenZoneFinale : tableau de tableau de tableau de tableau d'entiers
+    Trie la structure de donnée tabCentAdr par ordre croissant selon le génome de référence
+    \param tabCentAdr : tableau de tableau de tableau de tableau d'entiers
+    \return tabCentAdrTrie : tableau de tableau de tableau de tableau d'entiers
     '''
-    matGenZoneFinale = [] #initialement vide
-    for j in range (len(matGenZone)):
-        matGenZoneFinale.append([]) #aucun groupe pour l'instant
-    for groupe_index,groupe in enumerate(matGenZone[0]): 
-        if groupe != [] :
-            bool = True
-            for groupeP in range(len(matGenZoneFinale[0])): 
-                for zone in groupe: 
-                    if zone in matGenZoneFinale[0][groupeP]: 
-                        if len(groupe) > len(matGenZoneFinale[0][groupeP]): 
-                            matGenZoneFinale[0][groupeP] = groupe 
-                            bool = False
-                            for i in range(1,len(matGenZone)):
-                                matGenZoneFinale[i][groupeP] = matGenZone[i][groupe_index]
-            if bool == True:
-                matGenZoneFinale[0].append(groupe)
-                for i in range (1,len(matGenZone)):
-                    matGenZoneFinale[i].append(groupe)
-    for elt in matGenZoneFinale :
-        elt = elt.sort
-    return matGenZoneFinale
-
-def triCent(matGenZone):
-    '''
-    Trie la structure de donnée matGenZone par ordre croissant selon le génome de référence
-    \param matGenZone : tableau de tableau de tableau de tableau d'entiers
-    \return matGenRes : tableau de tableau de tableau de tableau d'entiers
-    '''
-    matGenRes = []
-    for i in range (len(matGenZone)) :
-        matGenRes.append([])
+    tabCentAdrTrie = []
+    for i in range (len(tabCentAdr)) :
+        tabCentAdrTrie.append([])
     clas = []
     recup = {}
-    for groupe_index,groupe in enumerate(matGenZone[0]) :
-        recup[groupe[0][0]] = groupe_index
-        clas.append(groupe[0][0])
-    clas.sort()
-    for min in clas :
-        for i in range(len(matGenZone)) :
-            matGenRes[i].append(matGenZone[i][recup[min]])
-    return matGenRes
+    for groupe_index,groupe in enumerate(tabCentAdr[0]) : #on parcourt les zones communes dans le génome de référence
+        recup[groupe[0][0]] = groupe_index #on associe dans le dictionnaire recup la première position de la zone avec son idice de zone
+        clas.append(groupe[0][0]) #on ajoute cette position dans le tableau clas
+    clas.sort() #on trie par ordre croissant le tableau clas
+    for min in clas : 
+        for i in range(len(tabCentAdr)) :
+            #Ajout par ordre croissant dans chaque génome des zones d'indice des zones dont les positions sont les plus petites dans le génome de référence
+            tabCentAdrTrie[i].append(tabCentAdr[i][recup[min]]) 
+    return tabCentAdrTrie
             
 
 def zonesCommunes(Tposition,beta):
     '''
-    Crée la structure de donnée liste_Finale qui contient la succession de sommets constituant les zones communes dans le génome de référence ainsi que tabCentAdr qui comporte les zones communes pour chaque génome en sucession d'arête
+    Crée la structure de donnée liste_Finale qui contient la succession de sommets constituant les zones communes dans le génome de référence ainsi que tabCentAdr qui comporte les zones communes pour chaque génome en sucession d'arête signifiant la liaison
     \param Tposition : tableau de tableau de tableau d'entiers
     \param beta : entier
     \return liste_Finale : tableau d'entiers
@@ -274,21 +277,21 @@ def zonesCommunes(Tposition,beta):
     listeDesParcourus = []
     tabCentAdr = []
     for i in range (len(Tposition)) :
-        tabCentAdr.append([]) #un tab pour chaque génome
+        tabCentAdr.append([]) 
     for i in range (len(Tposition[0])): #pour chaque kmer du génome de référence
         res = []
-        for z in range(len(Tposition[0][i])):#pour chaque position de ce kmer on va étendre au maximum si cette position n'a pas déjà été vu
+        for z in range(len(Tposition[0][i])): #pour chaque position de ce k-mer
             cpt = 1 
-            if Tposition[0][i][z] not in listeDesParcourus :
+            if Tposition[0][i][z] not in listeDesParcourus : #si cette position n'a pas déjè été vue 
                 listeDesParcourus.append(Tposition[0][i][z])
-                res.append([Tposition[0][i][z]])
-                for q in range (len(Tposition)): #pour chaque kmer commun du génome de référence on commence à créer une zone dans les autres génomes, elle restera vide si il n y a pas de liaison qui satisfasse beta 
+                res.append([Tposition[0][i][z]]) #il devient le début d'une zone commune
+                for q in range (len(Tposition)): #on ajoute une zone commune à chaque génome dans tabCentAdr
                     tabCentAdr[q].append([])
                 bool,kmer,tabRes = extensible(Tposition[0][i][z],i,Tposition,beta)
-                while bool:
-                    for q in range (len(tabRes)):
+                while bool: #tant que l'extension est possible
+                    for q in range (len(tabRes)): #pour chaque génome dans tabRes
                         if tabRes[q] != [] :
-                            tabCentAdr[q][-1].append([tabRes[q][0]-1,tabRes[q][0]]) #on ajoute à la zone qui vient d'etre crée la liaison
+                            tabCentAdr[q][-1].append([tabRes[q][0]-1,tabRes[q][0]]) #on ajoute à la zone commune qui vient d'etre créée dans les génomes l'arete de la liaison
                     res[-1].append(tabRes[0][0])
                     listeDesParcourus.append(tabRes[0][0])
                     bool,kmer,tabRes = extensible(tabRes[0][0],kmer,Tposition,beta)
@@ -314,9 +317,9 @@ def adr2seq(liste_Finale,saveGkampi):
     '''
     listeseq = []
     for i in liste_Finale:
-        sequence = saveGkampi[i[0]] 
+        sequence = saveGkampi[i[0]] #Conversion de la première position de la zone en séquence de nucléotide via saveGkampi
         for y in i[1:]:
-            sequence = sequence + saveGkampi[y][-1] 
+            sequence = sequence + saveGkampi[y][-1] #Concatenation de la dernière lettre des autres positions
         listeseq.append(sequence)
     return listeseq
 
@@ -324,8 +327,8 @@ def adr2seq(liste_Finale,saveGkampi):
 def sauvGenCons(liste_Finale,listeseq,k,argv):
     '''
     Crée le fichier de sortie fasta qui contient le génome consensus
-    \param liste_Finale : tableau d'entiers
-    \param listeseq : tableau de string
+    \param liste_Finale : tableau d'entiers, tableau des positions dans le génome de référence des zones communes
+    \param listeseq : tableau de string, tableau de séquences de nucléotides
     \param k : entier
     \param argv : tableau de string
     \return 0 
@@ -334,7 +337,8 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
     nameliste = []
     infoSup=""
     with open("ResulFasta.fasta","w") as File:
-        lecture = SeqIO.to_dict(SeqIO.parse(argv[0],"fasta")) 
+        lecture = SeqIO.to_dict(SeqIO.parse(argv[0],"fasta"))
+        #Récupération de tous les scaffolds du génome de référence 
         for seq in lecture:
             if scaffoldList == []:
                 scaffoldList.append([0,len(lecture[seq])])
@@ -342,11 +346,12 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
             else :
                 scaffoldList.append([(scaffoldList[-1][1])+1,len(lecture[seq])+scaffoldList[-1][1]])
                 nameliste.append(seq)
+        #Ecriture des séquences de listeseq dans le fichier de sortie
         for id,sequence in enumerate(listeseq):
             for compteur,pos in enumerate(scaffoldList):
                 infoSup = f" | {liste_Finale[id][0]},{liste_Finale[id][-1] + k-1} VS {pos[0]},{pos[1]} "
-                if liste_Finale[id][0]>= pos[0] and liste_Finale[id][-1] + k-1 <= pos[1]: # si il est contenu dans le scaffold
-                    infoSup += "| Pos in seq ("+ nameliste[compteur] +") inside the reference fasta file : begin = " + str( -pos[0] + liste_Finale[id][0]) 
+                if liste_Finale[id][0]>= pos[0] and liste_Finale[id][-1] + k-1 <= pos[1]: # s'il est contenu dans le scaffold
+                    infoSup += "| Pos in seq ("+ nameliste[compteur] +") inside the reference fasta file : begin = " + str( -pos[0] + liste_Finale[id][0])#begin = position de début de la séquence relatif au scaffold
             entete = ">sequence/scaffold_"+ str(id+1) +" | Position with Gkampi index in g1 "+ str(liste_Finale[id][0]) +" ==> "+ str(liste_Finale[id][-1] + k-1) + " | " + str(argv[0]) + infoSup +"\n"
             File.write(entete+sequence+"\n")
     return 0 
@@ -354,10 +359,10 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
 def sauvZonesCommunes(liste_Finale):
     '''
     Crée le fichier de sortie resultat.csv qui contient les zones communes pour permettre le débuggage
-    \param liste_Finale : tableau d'entiers
+    \param liste_Finale : tableau d'entiers, tableau des positions dans le génome de référence des zones communes
     \return 0
     '''
-    with open("resultat.csv",'w',newline='') as File: # On écrit nos liste de positions dans un fichier CSV pour pouvoir faire des vérifications
+    with open("resultat.csv",'w',newline='') as File: 
         Ecriture = csv.writer(File,delimiter=";")
         Ecriture.writerows(liste_Finale)
     return 0 
@@ -513,6 +518,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
             btn1 = ttk.Button(root, text ="Supprimer le dernier schéma", command = sup, name= f"btn{nbSub}")
             btn1.pack(pady = 10) 
 
+    #-------Création de la figure matplotlib-----------
     #Configuration des couleurs associés aux zones communes via la bibliothèque viridis
     num_colors = max(len(data_set) for data_set in tabCentAdr) 
     cmap = plt.cm.get_cmap('viridis', num_colors)
@@ -582,7 +588,7 @@ def main(argv,kmer,alpha,beta,tabFrame2,app) :
 
     #Création des zones communes
     liste_Finale,tabCentAdr = zonesCommunes(Tposition,beta)
-    affichMatGenCompMeilleur(triCent(simpCent(tabCentAdr)))
+    affichMatGenCompMeilleur(triTCA(redTCA(tabCentAdr)))
     
     #for key,value in saveGKampi.items() : print(f"\n\t{key}->{value}")
     listeSeq = adr2seq(liste_Finale,saveGKampi)
@@ -592,5 +598,5 @@ def main(argv,kmer,alpha,beta,tabFrame2,app) :
     sauvZonesCommunes(liste_Finale)
 
     #Affichage du schéma des zones communes
-    affStructSeg(triCent(simpCent(tabCentAdr)),tabFrame2,app,argv,kmer,alpha,beta)
+    affStructSeg(triTCA(redTCA(tabCentAdr)),tabFrame2,app,argv,kmer,alpha,beta)
 
