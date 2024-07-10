@@ -12,11 +12,11 @@ from customtkinter import *
 
 nbSub = 0 #variable globale, nombre de Submit envoyé
 
-#-------------Pour debugger----------------------------------------------------------------------------------
+#-------------Pour déboger----------------------------------------------------------------------------------
 def affichMatGen(matGen):
     '''
-    Affiche dans une structure de donnée adaptée tous les éléments contenus dans chaque génome
-    \param matGen : tableau de tableau d'éléments 
+    Affiche dans une structure de données adaptée tous les éléments contenus dans chaque génome.
+    \param matGen : tableau de tableaux d'éléments
     '''
     print("[")
     for i in range (len(matGen)):
@@ -29,8 +29,8 @@ def affichMatGen(matGen):
 
 def affichMatGenComp(matGen,ind):
     '''
-    Affiche dans une structure de donnée adaptée l'élément d'indice indiqué contenu dans chaque génome
-    \param matGen : tableau de tableau d'éléments
+    Affiche dans une structure de données adaptée l'élément d'indice indiqué contenu dans chaque génome.
+    \param matGen : tableau de tableaux d'éléments
     \param ind : entier
     '''
     print("[")
@@ -44,16 +44,16 @@ def affichMatGenComp(matGen,ind):
 
 def affichMatGenCompMeilleur(matGen) :
     '''
-    Affiche dans une structure de donnée adaptée chaque élément de chaque génome en simultané de manière à pouvoir les comparer
-    \param matGen : tableau de tableau d'éléments
+    Affiche dans une structure de données adaptée chaque élément de chaque génome simultanément, de manière à pouvoir les comparer.
+    \param matGen : tableau de tableaux d'éléments
     '''
     for i in range (len(matGen[0])):
         affichMatGenComp(matGen,i)
 
 def affichMatGenRef(matGen):
     '''
-    Affiche dans une structure de donnée adaptée tous les éléments du génome de référence
-    \param matGen : tableau de tableau d'éléments
+    Affiche dans une structure de données adaptée tous les éléments du génome de référence.
+    \param matGen : tableau de tableaux d'éléments
     '''
     print("[")
     print("\t genome 1")
@@ -67,11 +67,11 @@ def affichMatGenRef(matGen):
 
 def lancerGkampi(k,fichier,num):
     '''
-    Permet de lancer gkampi pour le fichier et la taille de k-mer indiqués, num permet de nommer le fichier de sortie
+    Permet de lancer gkampi pour le fichier et la taille de k-mer indiqués. \param num permet de nommer le fichier de sortie.
     \param k : entier, taille de k-mer
-    \param fichier : string, nom du fichier
+    \param fichier : chaîne de caractères, nom du fichier
     \param num : entier
-    \return 0 
+    \return 0
     '''
     commandeGkampi = ["./gkampi"]
     commandeGkampi.append(fichier)
@@ -89,9 +89,9 @@ def lancerGkampi(k,fichier,num):
 
 def lancerRedOak(k,argv):
     '''
-    Permet de lancer redOak pour la taille de k-mer et les fichiers indiqués
+    Permet de lancer redOak pour la taille de k-mer et les fichiers indiqués.
     \param k : entier
-    \param argv : tableau de string, tableau contenant les noms des fichiers
+    \param argv : tableau de chaînes de caractères, tableau contenant le nom des fichiers
     \return 0
     '''
     commandeRedOak = ["./redoak"]
@@ -109,9 +109,9 @@ def lancerRedOak(k,argv):
 
 def commandeGrep(alpha,argv):
     '''
-    Permet de lancer la commande grep qui va filtrer les k-mers communs du fichier de sortie redOak selon alpha
-    \param alpha : entier, seuil de génome pour lequel on considère un k-mer commun
-    \param argv : tableau de string
+    Permet de lancer la commande grep qui va filtrer les k-mers communs du fichier de sortie redOak selon \param alpha.
+    \param alpha : entier, seuil de génome à partir duquel on considère un k-mer comme commun
+    \param argv : tableau de chaînes de caractères
     '''
     commandeGrep = "grep -E \""
     val = int(alpha)
@@ -127,8 +127,8 @@ def commandeGrep(alpha,argv):
 
 def fliste():
     '''
-    Crée la structure de donnée "liste" qui contient tous les k-mers communs à partir du fichier les contenant "commun.txt"
-    \return liste : tableau de string, tableau des k-mers communs
+    Crée la structure de données "liste" qui contient tous les k-mers communs à partir du fichier "commun.txt".
+    \return liste : tableau de chaînes de caractères, tableau des k-mers communs
     '''
     liste = []
     with open("commun.txt","r") as File:
@@ -145,11 +145,11 @@ def fliste():
 
 def fTposition(k,argv):
     '''
-    Crée la structure de donnée Tposition qui contient toutes les positions des k-mers communs dans chaque génome
+    Crée la structure de données \return Tposition qui contient toutes les positions des k-mers communs dans chaque génome.
     \param k : entier
-    \param argv : tableau de string
-    \return Tposition : tableau de tableau de tableau d'entiers, tableau des positions des k-mers communs pour chaque génome
-    \return saveGkampi : dictionnaire qui associe à chaque position du génome de référence le k-mer associé
+    \param argv : tableau de chaînes de caractères
+    \return Tposition : tableau de tableaux de tableaux d'entiers, tableau des positions des k-mers communs pour chaque génome
+    \return saveGkampi : dictionnaire qui associe à chaque position du génome de référence le k-mer correspondant
     '''
     liste = fliste()
     Tposition=[]
@@ -171,7 +171,7 @@ def fTposition(k,argv):
                 for i in Lecture:
                     saveGkampi[int(i[1][1:])] = i[0] 
             print("La taille est de : ",len(liste))
-            gkampIndex = 0 #Indice qui va nous permettre de d'iterer sur les lignes du fichier *
+            gkampIndex = 0 #Indice qui va nous permettre de d'itérer sur les lignes du fichier (*)
             for i in range (len(liste)): #pour chaque k-mer commun
                 while gkampIndex<len(Lecture) and str(Lecture[gkampIndex][0]) != str(liste[i])  :#tant que le k-mer de la ligne n'est pas équivalent au k-mer commun
                     gkampIndex = gkampIndex +1 
@@ -181,18 +181,18 @@ def fTposition(k,argv):
         num += 1 
         print(time.time()-debut)
     return Tposition,saveGkampi
-# * On initialise gkampIndex avant la boucle de liste car redOak et gkampi indexent de meme manière les génomes 
+# (*) On initialise gkampIndex avant la boucle de liste car redOak et gkampi indexent de même manière les génomes, il n y a pas besoin de remettre gkampIndex à 0 pour chaque k-mer commun.
 
 def extensible(pos,NKmer,Tposition,beta): 
     '''
-    Permet de déterminer si un k-mer peut être étendu, si c'est possible, renvoie l'indice dans Tposition du k-mer avec lequel il l'est, et ses positions dans les génomes pour lesquels l'extension est possible
+    Permet de déterminer si un k-mer peut être étendu. Si c'est possible, renvoie l'indice dans Tposition du k-mer avec lequel il peut être lié, ainsi que ses positions dans les génomes pour lesquels l'extension est possible.
     \param pos : entier, position du k-mer
     \param NKmer : entier, indice du k-mer dans Tposition
-    \param Tposition : tableau de tableau de tableau d'entiers
-    \param beta : entier, seuil de génome pour lequel on considère la liaison entre k-mer
+    \param Tposition : tableau de tableaux de tableaux d'entiers
+    \param beta : entier, seuil de génome à partir duquel on considère la liaison entre k-mers
     \return True si l'extension est possible, False sinon
     \return ksauv : entier, l'indice dans Tposition du k-mer lié
-    \return tabRes : tableau de tableau d'entiers, le tableau des positions du k-mer lié dans les différents génomes
+    \return tabRes : tableau de tableaux d'entiers, tableau des positions du k-mer lié dans les différents génomes
     '''
     tabRes = []
     for Kmer in range (0,len(Tposition[0])): #pour chaque k-mer commun du génome de référence
@@ -211,7 +211,7 @@ def extensible(pos,NKmer,Tposition,beta):
                             tabRes[-1].append(Tposition[genome][NKmer][position2]+1)
                             liaison += 1
                             genomeVu.append(genome)
-            #si l'extension respecte le seuil beta
+            #si le nombre de liaison respecte le seuil beta
             if (liaison>=beta):
                 return True,ksauv,tabRes
             else :
@@ -221,9 +221,9 @@ def extensible(pos,NKmer,Tposition,beta):
 
 def redTCA(tabCentAdr):
     '''
-    Réduit la structure de donnée tabCentAdr en enlevant les doublons, ne gardant que les plus grandes zones communes quand il y a chevauchement dans le génome de référence
-    \param tabCentAdr : tableau de tableau de tableau de tableau d'entiers, structure qui contient pour chaque génome ses zones communes
-    \return tabCentAdrReduit : tableau de tableau de tableau de tableau d'entiers, structure réduite qui contient pour chaque génome ses zones communes
+    Réduit la structure de données tabCentAdr en éliminant les doublons, ne conservant que les plus grandes zones communes en cas de chevauchement dans le génome de référence.
+    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers, structure qui contient pour chaque génome ses zones communes
+    \return tabCentAdrReduit : tableau de tableaux de tableaux de tableaux d'entiers, structure réduite qui contient pour chaque génome ses zones communes
     '''
     tabCentAdrReduit = [] 
     for j in range (len(tabCentAdr)):
@@ -245,9 +245,9 @@ def redTCA(tabCentAdr):
 
 def triTCA(tabCentAdr):
     '''
-    Trie la structure de donnée tabCentAdr par ordre croissant selon le génome de référence
-    \param tabCentAdr : tableau de tableau de tableau de tableau d'entiers
-    \return tabCentAdrTrie : tableau de tableau de tableau de tableau d'entiers
+    Trie la structure de données tabCentAdr par ordre croissant selon le génome de référence.
+    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers
+    \return tabCentAdrTrie : tableau de tableaux de tableaux de tableaux d'entiers
     '''
     tabCentAdrTrie = []
     for i in range (len(tabCentAdr)) :
@@ -260,18 +260,18 @@ def triTCA(tabCentAdr):
     clas.sort() #on trie par ordre croissant le tableau clas
     for min in clas : 
         for i in range(len(tabCentAdr)) :
-            #Ajout par ordre croissant dans chaque génome des zones d'indice des zones dont les positions sont les plus petites dans le génome de référence
+            #ajout par ordre croissant dans chaque génome des zones d'indices dont les positions sont les plus petites dans le génome de référence
             tabCentAdrTrie[i].append(tabCentAdr[i][recup[min]]) 
     return tabCentAdrTrie
             
 
 def zonesCommunes(Tposition,beta):
     '''
-    Crée la structure de donnée liste_Finale qui contient la succession de sommets constituant les zones communes dans le génome de référence ainsi que tabCentAdr qui comporte les zones communes pour chaque génome en sucession d'arête signifiant la liaison
-    \param Tposition : tableau de tableau de tableau d'entiers
+    Crée la structure de données liste_Finale qui contient la succession de sommets constituant les zones communes dans le génome de référence, ainsi que tabCentAdr qui comporte les zones communes pour chaque génome en succession d'arêtes signifiant les liaisons.
+    \param Tposition : tableau de tableaux de tableaux d'entiers
     \param beta : entier
     \return liste_Finale : tableau d'entiers
-    \return tabCentAdr : tableau de tableau de tableau de tableau d'entiers
+    \return tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers
     '''
     liste_Finale = []
     listeDesParcourus = []
@@ -291,11 +291,11 @@ def zonesCommunes(Tposition,beta):
                 while bool: #tant que l'extension est possible
                     for q in range (len(tabRes)): #pour chaque génome dans tabRes
                         if tabRes[q] != [] :
-                            tabCentAdr[q][-1].append([tabRes[q][0]-1,tabRes[q][0]]) #on ajoute à la zone commune qui vient d'etre créée dans les génomes l'arete de la liaison
+                            tabCentAdr[q][-1].append([tabRes[q][0]-1,tabRes[q][0]]) #on ajoute à la zone commune qui vient d'être créée pour chaque génome où il y a eu une liaison l'arête de la liaison
                     res[-1].append(tabRes[0][0]) #on ajoute la position étendue à res
                     listeDesParcourus.append(tabRes[0][0])
                     bool,kmer,tabRes = extensible(tabRes[0][0],kmer,Tposition,beta)
-        #on réduit res en ne gardant que les plus grandes zones quand il y a chevauchement
+        #on réduit res en ne gardant que les plus grandes zones lorsque qu'il y a chevauchement
         for zone in res: 
             doublon = False
             for i in range(len(liste_Finale)): 
@@ -306,32 +306,32 @@ def zonesCommunes(Tposition,beta):
             if doublon == False:
                 liste_Finale.append(zone)
     liste_Finale.sort()
-    return liste_Finale,tabCentAdr#,tabCentAdrSimp
+    return liste_Finale,tabCentAdr
 
 def adr2seq(liste_Finale,saveGkampi):
     '''
-    Convertit une liste de succession de positions du génome de référence en liste de séquence de nucélotides via le dictionnaire saveGkampi
+    Convertit une liste de positions successives dans le génome de référence en une liste de séquences de nucléotides via le dictionnaire saveGkampi.
     \param liste_Finale : tableau d'entiers
     \param saveGkampi : dictionnaire
-    \return listeseq : tableau de string
+    \return listeseq : tableau de chaînes de caractères
     '''
     listeseq = []
     for i in liste_Finale:
-        sequence = saveGkampi[i[0]] #Conversion de la première position de la zone en séquence de nucléotide via saveGkampi
+        sequence = saveGkampi[i[0]] #Conversion de la première position de la zone en séquence de nucléotides via saveGkampi
         for y in i[1:]:
-            sequence = sequence + saveGkampi[y][-1] #Concatenation de la dernière lettre des k-mers des positions suivantes
+            sequence = sequence + saveGkampi[y][-1] #Concaténation de la dernière lettre des k-mers aux positions suivantes
         listeseq.append(sequence)
     return listeseq
 
 
 def sauvGenCons(liste_Finale,listeseq,k,argv):
     '''
-    Crée le fichier de sortie fasta qui contient le génome consensus
+    Crée le fichier de sortie fasta qui contient le génome consensus.
     \param liste_Finale : tableau d'entiers, tableau des positions dans le génome de référence des zones communes
-    \param listeseq : tableau de string, tableau de séquences de nucléotides
+    \param listeseq : tableau de chaînes de caractères, tableau des séquences de nucléotides
     \param k : entier, taille du k-mer
-    \param argv : tableau de string, tableau de noms des fichiers
-    \return 0 
+    \param argv : tableau de chaînes de caractères, tableau des noms des fichiers
+    \return 0
     '''
     scaffoldList = []
     nameliste = []
@@ -346,7 +346,7 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
             else :
                 scaffoldList.append([(scaffoldList[-1][1])+1,len(lecture[seq])+scaffoldList[-1][1]])
                 nameliste.append(seq)
-        #Ecriture des séquences de listeseq dans le fichier de sortie
+        #Écriture des séquences de listeseq dans le fichier de sortie
         for id,sequence in enumerate(listeseq):
             for compteur,pos in enumerate(scaffoldList):
                 infoSup = f" | {liste_Finale[id][0]},{liste_Finale[id][-1] + k-1} VS {pos[0]},{pos[1]} "
@@ -358,7 +358,7 @@ def sauvGenCons(liste_Finale,listeseq,k,argv):
 
 def sauvZonesCommunes(liste_Finale):
     '''
-    Crée le fichier de sortie resultat.csv qui contient les zones communes pour permettre le débuggage
+    Crée le fichier de sortie resultat.csv qui contient les zones communes pour permettre le débogage.
     \param liste_Finale : tableau d'entiers, tableau des positions dans le génome de référence des zones communes
     \return 0
     '''
@@ -372,21 +372,21 @@ def sauvZonesCommunes(liste_Finale):
 
 def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
     '''
-    Crée et affiche la figure matplotlib des zones communes
-    \param tabCentAdr : tableau de tableau de tableau de tableau d'entiers, matrice des zones communes pour chaque génome
+    Crée et affiche la figure matplotlib des zones communes.
+    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers, matrice des zones communes pour chaque génome
     \param tabFrame : objet customtkinter CTkScrollableFrame
     \param app : objet racine de l'interface customtkinter
-    \param argv : tableau de string, noms des fichiers insérés
-    \param k : entier, taille de k-mer insérée
-    \param alpha : entier, seuil de génome pour lequel un k-mer commun est considéré
-    \param beta : entier, seuil de génome pour lequel une liaison entre k-mer commun est considérée
-    \return 0 
+    \param argv : tableau de chaînes de caractères, noms des fichiers insérés
+    \param k : entier, taille du k-mer inséré
+    \param alpha : entier, seuil de génome à partir duquel un k-mer commun est considéré
+    \param beta : entier, seuil de génome à partir duquel une liaison entre k-mers communs est considérée
+    \return 0
     '''
     #tkinter n'accepte que les couleurs en codage hexadécimal or matplotlib donne des couleurs en codage RGB, une fonction de conversion est donc nécessaire
     def rgba_to_hex(rgba):
         '''
-        Convertit un codage rgba en un codage hexadécimal
-        \param rgba codage de couleur en rgba
+        Convertit un codage rgba en un codage hexadécimal.
+        \param rgba : codage de couleur en rgba
         \return codage de couleur en hexadécimal
         '''
         r, g, b, _ = rgba
@@ -394,7 +394,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
     
     def on_closing():
         '''
-        Permet de bien fermer la figure matplotlib quand on ferme l'interface customtkinter
+        Permet de bien fermer la figure matplotlib lorsque l'on ferme l'interface customtkinter.
         '''
         plt.close('all')  #Fermeture de toutes les figures matplotlib
         after_tasks = app.tk.eval("after info").split()
@@ -405,14 +405,14 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
 
     def tkMatplot(handles,fig):
         '''
-        Met en place la fenêtre tkinter qui va heberger la figure matplotlib ainsi que sa légende
-        \param handles : tableau de tuples d'un codage hexadécimal d'une couleur et d'un string, tableau qui contient la légende du schéma
-        \param fig : l'objet de la figure matplotlib 
+        Met en place la fenêtre tkinter qui va héberger la figure matplotlib ainsi que sa légende.
+        \param handles : tableau de tuples contenant un codage hexadécimal d'une couleur et une chaîne de caractères, tableau qui contient la légende du schéma
+        \param fig : objet de la figure matplotlib
         '''
         def on_click(event,segment_info): 
             '''
-            Configure l'affichage de la zone d'un segment lorsqu'il est cliqué
-            \param event : objet de l'évènement du clic
+            Configure l'affichage de la zone d'un segment lorsqu'il est cliqué.
+            \param event : objet de l'événement du clic
             \param segment_info : dictionnaire qui associe à chaque segment sa légende
             '''
             x, y = event.xdata, event.ydata
@@ -428,7 +428,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
         root = tabFrame
         def sup() :
             '''
-            Configure la suppression de schéma via le bouton associé en fonction du nombre de schéma
+            Configure la suppression de schémas via le bouton associé en fonction du nombre de schémas.
             \param root : objet racine de l'interface customtkinter
             '''
             global nbSub #Récupération de la variable globale nbSub
@@ -441,7 +441,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
         print(f"Nombre de schéma : {nbSub}")
         main_frame = ttk.Frame(root, padding='0.05i', name=f"mf{nbSub}")#Création de l'objet Frame qui va contenir le schéma
 
-        #Création des labels d'information qui renseigne les paramètres du schéma affiché
+        #Création des labels d'information qui renseignent les paramètres du schéma affiché
         name = "Reference genome = "+argv[0]+ "| compared genomes = "
         for fic in argv[1:] :
             name += fic + " "        
@@ -456,7 +456,7 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
         info_label = tk.Label(main_frame, text="Cliquez sur un segment pour voir les informations du groupe", bg="white", fg="black", font=("Arial",12))
         info_label.pack(side=tk.BOTTOM, fill=tk.X) #Cette étiquette est placée en bas de tout et prend toute la largeur
 
-        #Création d'un objet Canva qui va contenir la figure matplotlib
+        #Création d'un objet Canvas qui va contenir la figure matplotlib
         scroll_canvas = tk.Canvas(main_frame, background="blue")
         #Création des objets Scrollbar qui vont permettre son défilement
         scrollbarH = ttk.Scrollbar(main_frame, orient=tk.HORIZONTAL, command=scroll_canvas.xview)
@@ -514,18 +514,18 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
 
         canvas.mpl_connect("button_press_event",on_click) 
         if nbSub == 1 :
-            #Création du bouton de suppression de schéma au premier submit
+            #Création du bouton de suppression de schémas au premier submit
             btn1 = ttk.Button(root, text ="Supprimer le dernier schéma", command = sup, name= f"btn{nbSub}")
             btn1.pack(pady = 10) 
 
     #-------Création de la figure matplotlib-----------
-    #Configuration des couleurs associés aux zones communes via la bibliothèque viridis
+    #Configuration des couleurs associés aux zones communes via la bibliothèque "viridis"
     num_colors = max(len(data_set) for data_set in tabCentAdr) 
     cmap = plt.cm.get_cmap('viridis', num_colors)
     #Récupération de la plus petite et de la plus grande valeur pour l'échelle du schéma
     min_val = min(min(zone[0] for group in data_set for zone in group) for data_set in tabCentAdr)
     max_val = max(max(zone[1] for group in data_set for zone in group) for data_set in tabCentAdr)
-    #Mise en place de l'écart entre chaque génome
+    #Mise en place de l'écart minimal pour chaque génome
     max_data_set = max( len(data_set) for data_set in tabCentAdr)
     #Création du schéma
     fig, ax = plt.subplots(figsize=(5,2))
@@ -535,13 +535,13 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
     labels = []
     for ds_index, data_set in enumerate(tabCentAdr):
         y_value =3*max_data_set*ds_index #L'ordonnée de début pour placer les zones communes de chaque génome
-        y_mid.append(y_value+(len(data_set)/2)) #L'ordonnée pour laquelle on place la modalité (Génome i)
+        y_mid.append(y_value+(len(data_set)/2)) #L'ordonnée à laquelle on place la modalité (Génome i)
         for group_index, group in enumerate(data_set):
             y_value += 1 #Écart pour éviter tout chevauchement de zone
             color = cmap(group_index/num_colors) 
             hex_color = rgba_to_hex(color) 
             if ds_index == 0 : 
-                #Récupération des bornes du groupe dans le génome de référence, cela va servir pour la légende
+                #Récupère les bornes inférieure et supérieure du groupe dans le génome de référence, ce qui va servir pour la légende.
                 min_group = group[0][0] 
                 max_group = group[-1][1]
                 labels.append(f'{min_group}-{max_group}')
@@ -567,11 +567,11 @@ def affStructSeg(tabCentAdr,tabFrame,app,argv,k,alpha,beta):
 
 def main(argv,kmer,alpha,beta,tabFrame2,app) :
     '''
-    La fonction qui lance le programme
-    \param argv : tableau de string 
-    \param kmer : string
-    \param alpha : string
-    \param beta : string
+    La fonction qui lance le programme.
+    \param argv : tableau de chaînes de caractères 
+    \param kmer : chaîne de caractères
+    \param alpha : chaîne de caractères
+    \param beta : chaîne de caractères
     \param tabFrame2 : objet customtkinter CTkScrollableFrame
     \param app : objet racine de l'interface customtkinter
     '''

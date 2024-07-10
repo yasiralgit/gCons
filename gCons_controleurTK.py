@@ -39,7 +39,7 @@ frame4.pack(expand=True, anchor="n",pady=30,padx=10)
 
 def click_hander(): 
     '''
-    Lance le programme avec les informations renseignées une fois le bouton submit appuyé
+    Lance le programme avec les informations renseignées une fois le bouton "submit" appuyé.
     '''
     print(f"Fichier(s) inséré(s) : {textbox.get()}")
     print(f"Taille de k-mer souhaitée : {entry1.get()}")
