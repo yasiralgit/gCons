@@ -59,7 +59,11 @@ def affichMatGenRef(matGen):
     print("\t genome 1")
     print("\t [")
     for j in range (len(matGen[0])) :
+        print(f"\n\t zone {j}")
+        print(f"\t [")
         print(f"\t {matGen[0][j]}")
+        print(f"\t ]")
+        print(f"\t taille de la zone => {len(matGen[0][j])}")
     print("\t ]")
     print("]")
 #-------------fin -------------------------------------------------------------------------------------------
@@ -143,6 +147,7 @@ def fliste():
     print("Nombre de k-mers identiques == > "+ str(len(liste)))
     return liste 
 
+
 def fTposition(k,argv):
     '''
     Crée la structure de données \return Tposition qui contient toutes les positions des k-mers communs dans chaque génome.
@@ -183,6 +188,7 @@ def fTposition(k,argv):
     return Tposition,saveGkampi
 # (*) On initialise gkampIndex avant la boucle de liste car redOak et gkampi indexent de même manière les génomes, il n y a pas besoin de remettre gkampIndex à 0 pour chaque k-mer commun.
 
+
 def extensible(pos,NKmer,Tposition,beta): 
     '''
     Permet de déterminer si un k-mer peut être étendu. Si c'est possible, renvoie l'indice dans Tposition du k-mer avec lequel il peut être lié, ainsi que ses positions dans les génomes pour lesquels l'extension est possible.
@@ -219,51 +225,6 @@ def extensible(pos,NKmer,Tposition,beta):
     #s'il n y a pas de liaison possible dans le génome de référence
     return False,-1,-1
 
-def redTCA(tabCentAdr):
-    '''
-    Réduit la structure de données tabCentAdr en éliminant les doublons, ne conservant que les plus grandes zones communes en cas de chevauchement dans le génome de référence.
-    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers, structure qui contient pour chaque génome ses zones communes
-    \return tabCentAdrReduit : tableau de tableaux de tableaux de tableaux d'entiers, structure réduite qui contient pour chaque génome ses zones communes
-    '''
-    tabCentAdrReduit = [] 
-    for j in range (len(tabCentAdr)):
-        tabCentAdrReduit.append([]) 
-    for zbi,zoneBrute in enumerate(tabCentAdr[0]): #pour chaque zone commune du génome de référence de tabCentAdr
-        if zoneBrute != [] :
-            doublon = False #on considère initialement qu'elle n'est pas un doublon
-            for pgzi,plusGrandeZone in enumerate(tabCentAdrReduit[0]): #on parcourt les zones réduites
-                for position in zoneBrute: 
-                    if position in plusGrandeZone: #s'il y a un chevauchement entre une zone brute et une zone réduite
-                        doublon = True #alors on a un doublon
-                        if len(zoneBrute) > len(plusGrandeZone): #et si la zone la plus grande est la zone brute alors on a trouvé une zone plus complète
-                            for i in range(len(tabCentAdr)):
-                                tabCentAdrReduit[i][pgzi] = tabCentAdr[i][zbi] #on écrase dans chaque génome l'ancienne zone réduite avec la nouvelle
-            if doublon == False: #s'il n y a pas de doublon alors on ajoute cette zone à tabCentAdrReduit 
-                for i in range (len(tabCentAdr)):
-                    tabCentAdrReduit[i].append(zoneBrute)
-    return tabCentAdrReduit
-
-def triTCA(tabCentAdr):
-    '''
-    Trie la structure de données tabCentAdr par ordre croissant selon le génome de référence.
-    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers
-    \return tabCentAdrTrie : tableau de tableaux de tableaux de tableaux d'entiers
-    '''
-    tabCentAdrTrie = []
-    for i in range (len(tabCentAdr)) :
-        tabCentAdrTrie.append([])
-    clas = []
-    recup = {}
-    for groupe_index,groupe in enumerate(tabCentAdr[0]) : #on parcourt les zones communes dans le génome de référence
-        recup[groupe[0][0]] = groupe_index #on associe dans le dictionnaire recup la première position de la zone avec son idice de zone
-        clas.append(groupe[0][0]) #on ajoute cette position dans le tableau clas
-    clas.sort() #on trie par ordre croissant le tableau clas
-    for min in clas : 
-        for i in range(len(tabCentAdr)) :
-            #ajout par ordre croissant dans chaque génome des zones d'indices dont les positions sont les plus petites dans le génome de référence
-            tabCentAdrTrie[i].append(tabCentAdr[i][recup[min]]) 
-    return tabCentAdrTrie
-            
 
 def zonesCommunes(Tposition,beta):
     '''
@@ -278,8 +239,8 @@ def zonesCommunes(Tposition,beta):
     tabCentAdr = []
     for i in range (len(Tposition)) :
         tabCentAdr.append([]) 
+    res = []
     for i in range (len(Tposition[0])): #pour chaque kmer du génome de référence
-        res = []
         for z in range(len(Tposition[0][i])): #pour chaque position de ce k-mer
             cpt = 1 
             if Tposition[0][i][z] not in listeDesParcourus : #si cette position n'a pas déjè été vue 
@@ -295,19 +256,83 @@ def zonesCommunes(Tposition,beta):
                     res[-1].append(tabRes[0][0]) #on ajoute la position étendue à res
                     listeDesParcourus.append(tabRes[0][0])
                     bool,kmer,tabRes = extensible(tabRes[0][0],kmer,Tposition,beta)
-        #on réduit res en ne gardant que les plus grandes zones lorsque qu'il y a chevauchement
-        for zone in res: 
-            doublon = False
-            for i in range(len(liste_Finale)): 
-                for pos in zone: 
-                    if (pos) in liste_Finale[i]: 
-                        doublon = True
-                        liste_Finale[i] = zone 
-            if doublon == False:
-                liste_Finale.append(zone)
+
+    #Réduction de res en ne gardant que les plus grandes zones lorsque qu'il y a chevauchement
+    if len(res) > 1 :
+        liste_Finale.append(res[0])
+        for zone in res[1:]: 
+            i = 0
+            j = 0
+            while i < len(liste_Finale) and zone[j] not in liste_Finale[i]  : #tant qu'on a pas parcouru toutes les zones de liste_Finale ou tant qu'il n y a pas de chevauchement de zone
+                j += 1 #on passe à la position suivante
+                if j == len(zone) : #si on a parcouru toute la zone 
+                    i+=1 #on passe à une autre zone de liste_Finale
+                    j = 0 #et on se remet à la première position de zone
+            if i == len(liste_Finale) : #si on a pas trouvé de chevauchement, en ayant parcouru toutes les zones de liste_Finale
+                liste_Finale.append(zone) #cette zone est unique on l'ajoute à liste_Finale
+            else : #si on a trouvé un chevauchement, alors la zone qui a été trouvé est forcément plus complète (*)
+                liste_Finale[i] = zone #on écrase la zone précédente avec la nouvelle
+    else :
+        liste_Finale = res
     liste_Finale.sort()
     return liste_Finale,tabCentAdr
+#(*) S'il existe une autre zone où il y a chevauchement non encore traité, alors cette zone est forcément plus grande, c'est-à-dire plus complète. En effet, lorsqu'on crée une zone commune, on vérifie que la première position n'a pas déjà été vue, mais on ne vérifie pas cela lors de l'extension, tout en ajoutant les positions de l'extension comme positions déjà vues.
 
+def redTCA(tabCentAdr):
+    '''
+    Réduit la structure de données tabCentAdr en éliminant les doublons, ne conservant que les plus grandes zones communes en cas de chevauchement dans le génome de référence.
+    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers, structure qui contient pour chaque génome ses zones communes
+    \return tabCentAdrReduit : tableau de tableaux de tableaux de tableaux d'entiers, structure réduite qui contient pour chaque génome ses zones communes
+    '''
+    tabCentAdrReduit = [] 
+    for j in range (len(tabCentAdr)):
+        tabCentAdrReduit.append([]) 
+    #Même principe que pour la réduction de liste_Finale
+    if len(tabCentAdr[0]) > 1 :
+        for k in range(len(tabCentAdr)) :
+            tabCentAdrReduit[k].append(tabCentAdr[k][0])
+        for zIndex,zone in enumerate(tabCentAdr[0]):
+            if zone != [] : 
+                i = 0
+                j = 0
+                while i < len(tabCentAdrReduit[0]) and zone[j] not in tabCentAdrReduit[0][i]  :
+                    j += 1
+                    if j == len(zone) :
+                        i+=1 
+                        j = 0
+                if i == len(tabCentAdrReduit[0]) :
+                    for k in range(len(tabCentAdrReduit)) :
+                        tabCentAdrReduit[k].append(tabCentAdr[k][zIndex])
+                else :
+                    for k in range(len(tabCentAdrReduit)) :
+                        tabCentAdrReduit[k][i] = tabCentAdr[k][zIndex]
+    else :  
+        tabCentAdrReduit = tabCentAdr
+    return tabCentAdrReduit
+
+def triTCA(tabCentAdr):
+    '''
+    Trie la structure de données tabCentAdr par ordre croissant selon le génome de référence.
+    \param tabCentAdr : tableau de tableaux de tableaux de tableaux d'entiers
+    \return tabCentAdrTrie : tableau de tableaux de tableaux de tableaux d'entiers
+    '''
+    tabCentAdrTrie = []
+    for i in range (len(tabCentAdr)) :
+        tabCentAdrTrie.append([])
+    clas = []
+    recup = {}
+    #affichMatGenRef(tabCentAdr)
+    for groupe_index,groupe in enumerate(tabCentAdr[0]) : #on parcourt les zones communes dans le génome de référence
+        #print("\t",groupe)
+        recup[groupe[0][0]] = groupe_index #on associe dans le dictionnaire recup la première position de la zone avec son idice de zone
+        clas.append(groupe[0][0]) #on ajoute cette position dans le tableau clas
+    clas.sort() #on trie par ordre croissant le tableau clas
+    for min in clas : 
+        for i in range(len(tabCentAdr)) :
+            #ajout par ordre croissant dans chaque génome des zones d'indices dont les positions sont les plus petites dans le génome de référence
+            tabCentAdrTrie[i].append(tabCentAdr[i][recup[min]]) 
+    return tabCentAdrTrie
+            
 def adr2seq(liste_Finale,saveGkampi):
     '''
     Convertit une liste de positions successives dans le génome de référence en une liste de séquences de nucléotides via le dictionnaire saveGkampi.
