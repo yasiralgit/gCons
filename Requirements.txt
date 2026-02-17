@@ -1,0 +1,11 @@
+# gCons — Python dependencies
+# Install with: pip install -r requirements.txt
+#
+# Note: tkinter is bundled with Python but requires a system package on some setups.
+#   macOS (Homebrew): brew install python-tk@3.x
+#   Ubuntu/Debian:    sudo apt install python3-tk
+
+biopython>=1.83
+customtkinter>=5.2.2
+matplotlib>=3.9.0
+numpy>=1.26.0

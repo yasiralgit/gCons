@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# gCons outputs
+outputs/
+commun.txt
+test.txt
+result*.csv
+ResulFasta.fasta
+resultat.csv
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
